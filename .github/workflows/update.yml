@@ -48,6 +48,16 @@ jobs:
           Write-Host $actual
           if ($actual -notmatch [regex]::Escape($expected)) { throw "expected mcp-rs $expected" }
 
+      # 利用者と同じ手順（bucketを足して入れる）で入れられること
+      - name: Install from the bucket as users do
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          scoop uninstall mcp-rs
+          scoop bucket add n-takatsu https://github.com/n-takatsu/scoop-bucket
+          scoop install n-takatsu/mcp-rs
+          mcp-rs --version
+
       - name: Commit the update
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         shell: pwsh
