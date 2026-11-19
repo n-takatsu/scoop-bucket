@@ -1,0 +1,62 @@
+name: Update and test
+
+# Daily: update the manifest to the latest mcp-rs release, install it to
+# test, and commit it. On pushes and pull requests: install it to test.
+on:
+  schedule:
+    - cron: '23 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    name: Update and test
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Scoop
+        shell: pwsh
+        run: |
+          Invoke-RestMethod -Uri https://get.scoop.sh -OutFile install-scoop.ps1
+          .\install-scoop.ps1 -RunAsAdmin
+          Remove-Item install-scoop.ps1
+          Join-Path $HOME 'scoop\shims' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Update the manifest to the latest release
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          $checkver = Join-Path $HOME 'scoop\apps\scoop\current\bin\checkver.ps1'
+          & $checkver -App mcp-rs -Dir bucket -Update
+
+      - name: Install to test
+        shell: pwsh
+        run: |
+          scoop install .\bucket\mcp-rs.json
+          $expected = (Get-Content bucket\mcp-rs.json -Raw | ConvertFrom-Json).version
+          $actual = mcp-rs --version
+          Write-Host $actual
+          if ($actual -notmatch [regex]::Escape($expected)) { throw "expected mcp-rs $expected" }
+
+      - name: Commit the update
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          git diff --quiet -- bucket
+          if ($LASTEXITCODE -eq 0) { Write-Host 'Already the latest release'; exit 0 }
+          $version = (Get-Content bucket\mcp-rs.json -Raw | ConvertFrom-Json).version
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add bucket\mcp-rs.json
+          git commit -m "mcp-rs: Update to version $version"
+          git push
