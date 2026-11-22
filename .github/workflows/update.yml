@@ -35,9 +35,19 @@ jobs:
       - name: Update the manifest to the latest release
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $checkver = Join-Path $HOME 'scoop\apps\scoop\current\bin\checkver.ps1'
-          & $checkver -App mcp-rs -Dir bucket -Update
+          & $checkver -App mcp-rs -Dir bucket -Update -ThrowError
+          # checkverは、設定の誤り等では例外を出さず、そのmanifestを飛ばす
+          # だけ（n-takatsu/mcp-rs#692）。最新のリリースの版になったことを
+          # 確かめる
+          $latest = gh release view --repo n-takatsu/mcp-rs --json tagName -q .tagName
+          if ($LASTEXITCODE -ne 0 -or -not $latest) { throw 'could not read the latest mcp-rs release' }
+          $latest = $latest -replace '^v', ''
+          $version = (Get-Content bucket\mcp-rs.json -Raw | ConvertFrom-Json).version
+          if ($version -ne $latest) { throw "the manifest is $version, but the latest mcp-rs release is $latest" }
 
       - name: Install to test
         shell: pwsh
