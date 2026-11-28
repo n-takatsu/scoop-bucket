@@ -1,5 +1,5 @@
 {
-    "version": "0.30.0",
+    "version": "0.31.0",
     "description": "MCP server that gives AI clients tools for WordPress, databases (PostgreSQL, MySQL, MariaDB) and external MCP plugins",
     "homepage": "https://n-takatsu.github.io/mcp-rs/",
     "license": "MIT|Apache-2.0",
@@ -9,9 +9,9 @@
     ],
     "architecture": {
         "64bit": {
-            "url": "https://github.com/n-takatsu/mcp-rs/releases/download/v0.30.0/mcp-rs-v0.30.0-x86_64-pc-windows-msvc.zip",
-            "hash": "af50d09cc0be35d244372f15ee9d4cc213822cc7571be75ed0d34c91ecbe6512",
-            "extract_dir": "mcp-rs-v0.30.0-x86_64-pc-windows-msvc"
+            "url": "https://github.com/n-takatsu/mcp-rs/releases/download/v0.31.0/mcp-rs-v0.31.0-x86_64-pc-windows-msvc.zip",
+            "hash": "8c9373ed967f37b95f1ed2bf4b0b0414585e51a068fbec7687da9369c564c8cb",
+            "extract_dir": "mcp-rs-v0.31.0-x86_64-pc-windows-msvc"
         }
     },
     "bin": "mcp-rs.exe",
